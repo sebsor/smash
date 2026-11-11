@@ -425,11 +425,15 @@ export class Game {
 
   // ── Projectiles ─────────────────────────────────────────────
   spawnProjectile(owner, spec) {
+    // Order matters: `...spec` copies ALL fields from the move data, and with a spread
+    // the LAST value of a field wins. spec.x / spec.y are offsets from the fighter
+    // (e.g. "36 px in front, 40 px up"), so the spread must come FIRST and the real
+    // world position must be written AFTER it — otherwise the offset overwrites it.
     const p = {
+      ...spec,
       id: ++this.projId, owner: owner.id, slot: owner.slot,
       dir: owner.facing, x: owner.x + owner.facing * spec.x, y: owner.y + spec.y,
       px: 0, py: 0, age: 0, hitMap: new Map(),
-      ...spec,
     };
     p.vx = spec.vx * owner.facing; p.vy = spec.vy || 0; p.sp = Math.abs(p.vx);
     this.projectiles.push(p);
