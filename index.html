@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shapeshock</title>
+  <meta name="description" content="A four-player online platform fighter. Host a game, share the code, knock your friends off the stage.">
+  <meta name="theme-color" content="#1a1238">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='24' cy='34' r='18' fill='%2333e1ff' stroke='%231a1238' stroke-width='4'/%3E%3Cpath d='M44 8 62 44H26z' fill='%23ffd23d' stroke='%231a1238' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Animated backdrop for the menus (sky + idling fighters) -->
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <!-- ── Title ─────────────────────────────────────────── -->
+  <section id="screen-title" class="screen">
+    <div class="title-col">
+      <h1 class="wordmark">Shapeshock</h1>
+      <p class="tagline">Four shapes, one floating stage. Rack up damage, then knock them off.</p>
+
+      <form class="panel" id="form-start" autocomplete="off">
+        <label class="field">
+          <span>Your name</span>
+          <input id="name" maxlength="14" spellcheck="false" required>
+        </label>
+        <button type="button" id="btn-host" class="btn primary">Host a game</button>
+        <div class="join-row">
+          <label class="field grow">
+            <span>Have a code?</span>
+            <input id="code" maxlength="5" placeholder="ABCDE" spellcheck="false" autocapitalize="characters">
+          </label>
+          <button type="submit" id="btn-join" class="btn">Join</button>
+        </div>
+        <p id="title-msg" class="msg" role="alert"></p>
+      </form>
+
+      <div class="title-links">
+        <button type="button" class="link" data-open="controls">Controls</button>
+        <button type="button" class="link" id="btn-mute">Sound: on</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Lobby ─────────────────────────────────────────── -->
+  <section id="screen-lobby" class="screen" hidden>
+    <header class="lobby-head">
+      <div class="code-card">
+        <span class="code-hint">Share this code so friends can join</span>
+        <strong id="lobby-code" class="code">·····</strong>
+        <button type="button" id="btn-copy" class="btn small">Copy invite link</button>
+      </div>
+      <div class="lobby-actions">
+        <button type="button" class="link" data-open="controls">Controls</button>
+        <button type="button" id="btn-leave-lobby" class="btn ghost small">Leave</button>
+      </div>
+    </header>
+
+    <ol class="slots" id="slots" aria-label="Players"></ol>
+
+    <h2 class="pick-title">Pick your fighter</h2>
+    <div class="roster" id="roster" role="radiogroup" aria-label="Fighters"></div>
+
+    <footer class="lobby-foot">
+      <p id="lobby-msg" class="msg" role="status"></p>
+      <button type="button" id="btn-start" class="btn primary big">Start match</button>
+    </footer>
+  </section>
+
+  <!-- ── Match ─────────────────────────────────────────── -->
+  <section id="screen-game" class="screen" hidden>
+    <canvas id="game"></canvas>
+    <div class="game-corner">
+      <span id="ping" class="ping"></span>
+      <button type="button" id="btn-pause" class="btn small ghost" title="Menu (Esc)">Menu</button>
+    </div>
+    <div id="pause" class="overlay" hidden>
+      <div class="panel dialog" role="dialog" aria-labelledby="pause-title">
+        <h2 id="pause-title">Match menu</h2>
+        <p class="muted">The match keeps running for everyone else.</p>
+        <div class="row">
+          <button type="button" id="btn-resume" class="btn primary">Keep playing</button>
+          <button type="button" id="btn-quit" class="btn ghost">Leave match</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Results ───────────────────────────────────────── -->
+  <section id="screen-results" class="screen" hidden>
+    <div class="results-wrap">
+      <h2 class="results-title" id="results-title">Results</h2>
+      <ol class="results" id="results"></ol>
+      <div class="results-foot">
+        <p id="results-msg" class="muted"></p>
+        <button type="button" id="btn-lobby" class="btn primary big">Back to lobby</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Controls overlay ──────────────────────────────── -->
+  <div id="controls" class="overlay" hidden>
+    <div class="panel dialog wide" role="dialog" aria-labelledby="controls-title">
+      <h2 id="controls-title">Controls</h2>
+      <table class="keys" id="keys"></table>
+      <ul class="tips">
+        <li>Attack + a direction gives a different move. Same for Special and Smash.</li>
+        <li>In the air, Shield is an air dodge. Hold a direction to dodge that way.</li>
+        <li>While shielding: a direction rolls, down sidesteps, Attack grabs, Jump jumps out.</li>
+        <li>Holding someone: press a direction to throw, Attack to hit them.</li>
+        <li>Falling off-stage? Up + Special is your recovery. Grab the ledge, then press a direction to climb.</li>
+        <li>Tap Down after the top of a jump to fast fall. Tap Down on a thin platform to drop through.</li>
+        <li>Getting launched? Press Shield just before hitting the floor to tech.</li>
+      </ul>
+      <button type="button" class="btn primary" data-close>Got it</button>
+    </div>
+  </div>
+
+  <noscript><p class="noscript">Shapeshock needs JavaScript to run.</p></noscript>
+  <script src="vendor/peerjs.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
