@@ -73,6 +73,13 @@
   <!-- ── Match ─────────────────────────────────────────── -->
   <section id="screen-game" class="screen" hidden>
     <canvas id="game"></canvas>
+    <aside id="hud-controls" class="hud-controls" aria-label="Controls">
+      <div class="hc-head">
+        <span>Controls</span>
+        <button type="button" id="btn-hud-toggle" class="hc-toggle" aria-expanded="true">Hide</button>
+      </div>
+      <table id="hud-keys"></table>
+    </aside>
     <div class="game-corner">
       <span id="ping" class="ping"></span>
       <button type="button" id="btn-pause" class="btn small ghost" title="Menu (Esc)">Menu</button>

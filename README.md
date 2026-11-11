@@ -22,12 +22,14 @@ There's no build step. The browser loads the `js/` files directly as ES modules.
 | Action | Left-hand layout | Arrow layout |
 |---|---|---|
 | Move | W A S D | Arrow keys |
-| Jump | Space | Space |
+| Jump | Space or W | Space |
 | Attack | J | Z |
 | Special | K | X |
 | Smash attack (hold to charge) | I | C |
 | Shield / dodge | L or Shift | V or Shift |
 | Grab | ; | B |
+
+**W as jump ("tap jump", like Smash):** W jumps *and* aims up. W + Special or W + Smash on the ground becomes an up-special or up-smash instead of a jump, and W + Attack becomes an up-tilt. In the air, W waits 3 frames before double jumping, so W + Attack or W + Special gives an up-air or up-special without wasting your jump. Space is always a plain jump.
 
 ## How it's built
 
@@ -60,6 +62,7 @@ There's no build step. The browser loads the `js/` files directly as ES modules.
 node tests/fuzz-test.mjs       # 4 bots mash random buttons: checks crashes, NaN, stuck states
 node tests/ko-test.mjs         # at what % each strong move KOs, centre stage vs ledge
 node tests/recovery-test.mjs   # can each fighter make it back from off-stage?
+node tests/tapjump-test.mjs    # W tap-jump rules
 ```
 
 To test multiplayer locally without the public server, run your own PeerServer (`npx peerjs --port 9000`) and open the game with `?peer=127.0.0.1:9000` in the URL.

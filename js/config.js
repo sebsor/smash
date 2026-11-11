@@ -22,6 +22,7 @@ export const BTN = {
   SMASH: 1 << 7,
   SHIELD: 1 << 8,
   GRAB: 1 << 9,
+  TAPJUMP: 1 << 10,   // W: jumps AND aims up at the same time (Smash's "tap jump")
 };
 export const BTN_NAMES = Object.keys(BTN);   // index i  ↔  bit (1 << i)
 

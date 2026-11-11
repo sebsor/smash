@@ -92,6 +92,15 @@ export class Fighter {
   pressedBuf(btn, win = PHYS.inputBuffer) { return this.buf[Math.log2(btn)] <= win; }
   use(btn) { this.buf[Math.log2(btn)] = 99; }
   isHeld(btn) { return (this.input.held & btn) !== 0; }
+
+  // A jump can come from Space (pure jump) or W ("tap jump": jump + up at once).
+  // We remember which, because tap jumps allow a few Smash-style cancels.
+  jumpPressed() {
+    if (this.pressedBuf(BTN.JUMP)) { this.use(BTN.JUMP); this.tapJump = false; return true; }
+    if (this.pressedBuf(BTN.TAPJUMP)) { this.use(BTN.TAPJUMP); this.tapJump = true; return true; }
+    return false;
+  }
+  get jumpHeld() { return this.isHeld(BTN.JUMP) || this.isHeld(BTN.TAPJUMP); }
   get dirX() { return (this.isHeld(BTN.RIGHT) ? 1 : 0) - (this.isHeld(BTN.LEFT) ? 1 : 0); }
   get dirY() { return (this.isHeld(BTN.DOWN) ? 1 : 0) - (this.isHeld(BTN.UP) ? 1 : 0); }
 
@@ -233,7 +242,7 @@ export class Fighter {
 
       case 'turn':   // short skid when reversing a run
         this.friction(1.4);
-        if (this.pressedBuf(BTN.JUMP)) { this.use(BTN.JUMP); this.setState('jumpsquat'); break; }
+        if (this.jumpPressed()) { this.setState('jumpsquat'); break; }
         if (this.sf >= 6) this.setState(this.dirX ? 'run' : 'idle');
         break;
 
@@ -245,9 +254,19 @@ export class Fighter {
 
       case 'jumpsquat':
         this.friction(0.4);
+        // Like Smash: the first frames of a jump can be cancelled into up-special or
+        // up-smash. With W (tap jump) also into up-tilt — so W+J is an up-tilt, not a jump.
+        if (this.dirY < 0) {
+          const cancel = (btn, key) => {
+            if (!this.pressedBuf(btn)) return false;
+            this.use(btn); this.use(BTN.TAPJUMP); this.startMove(key, game); return true;
+          };
+          if (cancel(BTN.SPECIAL, 'uspec') || cancel(BTN.SMASH, 'usmash')) break;
+          if (this.tapJump && cancel(BTN.ATTACK, 'utilt')) break;
+        }
         if (this.sf >= PHYS.jumpSquat) {
           // Still holding jump at the end of the squat = full hop, released = short hop.
-          const full = this.isHeld(BTN.JUMP);
+          const full = this.jumpHeld;
           this.leaveGround();
           this.vy = -(full ? this.ch.jump : this.ch.hop);
           this.vx = this.vx * 0.85 + this.dirX * 2;
@@ -326,7 +345,7 @@ export class Fighter {
         if (this.sf >= 20) {
           if (this.pressedBuf(BTN.ATTACK) || this.pressedBuf(BTN.SMASH)) { this.use(BTN.ATTACK); this.use(BTN.SMASH); this.startMove('getupAttack', game); break; }
           if (this.dirX) { this.rollDir = this.dirX; this.setState('getupRoll'); break; }
-          if (this.pressedBuf(BTN.JUMP) || this.pressedBuf(BTN.UP) || this.pressedBuf(BTN.SHIELD)) { this.setState('getup'); break; }
+          if (this.pressedBuf(BTN.JUMP) || this.pressedBuf(BTN.UP) || this.pressedBuf(BTN.SHIELD)) { this.use(BTN.TAPJUMP); this.setState('getup'); break; }
         }
         if (this.sf >= 90) this.setState('getup');
         break;
@@ -364,6 +383,7 @@ export class Fighter {
         this.vx = this.vy = 0;
         if (this.sf > 20 && (this.input.pressed || this.input.held & (BTN.LEFT | BTN.RIGHT | BTN.DOWN))
           || this.sf > 240) {
+          this.use(BTN.TAPJUMP);   // leaving the platform with W shouldn't also double jump
           this.setState('air');
           this.invuln = 120;
         }
@@ -376,7 +396,7 @@ export class Fighter {
   groundActions(game, running = false) {
     const dx = this.dirX, dy = this.dirY;
 
-    if (this.pressedBuf(BTN.JUMP)) { this.use(BTN.JUMP); this.setState('jumpsquat'); return true; }
+    if (this.jumpPressed()) { this.setState('jumpsquat'); return true; }
 
     if (this.pressedBuf(BTN.GRAB) || (this.isHeld(BTN.SHIELD) && this.pressedBuf(BTN.ATTACK))) {
       this.use(BTN.GRAB); this.use(BTN.ATTACK); this.startMove('grab', game); return true;
@@ -420,8 +440,12 @@ export class Fighter {
   airActions(game) {
     const dx = this.dirX, dy = this.dirY;
 
-    if (this.pressedBuf(BTN.JUMP) && this.airJumps > 0) {
-      this.use(BTN.JUMP);
+    // W in the air waits 3 frames before double-jumping: if you press Attack/Special
+    // in that window you get the up-aerial/up-special and KEEP your double jump.
+    const tj = this.buf[Math.log2(BTN.TAPJUMP)];
+    const tapJumpReady = tj >= 3 && tj <= PHYS.inputBuffer;
+    if ((this.pressedBuf(BTN.JUMP) || tapJumpReady) && this.airJumps > 0) {
+      this.use(BTN.JUMP); this.use(BTN.TAPJUMP);
       this.airJumps--; this.ffall = false; this.djT = 0;
       this.vy = -this.ch.airJump;
       this.vx = dx * this.ch.air;           // double jumps let you change direction instantly
@@ -441,9 +465,9 @@ export class Fighter {
       this.kvx = this.kvy = 0;
       return true;
     }
-    if (this.pressedBuf(BTN.SPECIAL)) { this.use(BTN.SPECIAL); return this.doSpecial(game); }
+    if (this.pressedBuf(BTN.SPECIAL)) { this.use(BTN.SPECIAL); this.use(BTN.TAPJUMP); return this.doSpecial(game); }
     if (this.pressedBuf(BTN.ATTACK) || this.pressedBuf(BTN.SMASH) || this.pressedBuf(BTN.GRAB)) {
-      this.use(BTN.ATTACK); this.use(BTN.SMASH); this.use(BTN.GRAB);
+      this.use(BTN.ATTACK); this.use(BTN.SMASH); this.use(BTN.GRAB); this.use(BTN.TAPJUMP);
       let key = 'nair';
       if (dy < 0) key = 'uair';
       else if (dy > 0) key = 'dair';
@@ -522,7 +546,7 @@ export class Fighter {
     this.shieldHP -= SHIELD.drainPerFrame;
     if (this.shieldHP <= 0) { game.shieldBreak(this); return; }
     // Out-of-shield options (what makes shield more than a wall)
-    if (this.pressedBuf(BTN.JUMP)) { this.use(BTN.JUMP); this.setState('jumpsquat'); return; }
+    if (this.jumpPressed()) { this.setState('jumpsquat'); return; }
     if (this.pressedBuf(BTN.ATTACK) || this.pressedBuf(BTN.GRAB)) { this.use(BTN.ATTACK); this.use(BTN.GRAB); this.startMove('grab', game); return; }
     if (this.pressedBuf(BTN.SPECIAL) && this.dirY < 0) { this.use(BTN.SPECIAL); this.startMove('uspec', game); return; }
     if (this.pressedBuf(BTN.SMASH) && this.dirY < 0) { this.use(BTN.SMASH); this.startMove('usmash', game); return; }
@@ -569,7 +593,7 @@ export class Fighter {
     const climbTo = () => { this.climb = { fx: this.x, fy: this.y, tx: stand.x, ty: stand.y, t: 0, n: 16 }; };
 
     if (this.pressedBuf(BTN.JUMP) || this.pressedBuf(BTN.UP, 2)) {
-      this.use(BTN.JUMP); this.use(BTN.UP);
+      this.use(BTN.JUMP); this.use(BTN.UP); this.use(BTN.TAPJUMP);
       game.releaseLedge(this);
       this.vy = -this.ch.jump * 1.05; this.vx = toward * 2;
       this.invuln = Math.max(this.invuln, 4);

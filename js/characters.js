@@ -124,6 +124,12 @@ function makeNormals(c, p) {
 const zip = {
   id: 'zip', name: 'Zip', role: 'Speedster',
   blurb: 'Tiny, twitchy and hard to pin down. Wins with speed, not power.',
+  specials: [
+    ['Neutral', 'Pinwheel', 'Spinning multi-hit that drags people in, then launches.'],
+    ['Side', 'Blitz', 'Straight-line dash strike. Once per trip through the air.'],
+    ['Up', 'Zipline', 'Rocket in any of 8 directions. Great recovery.'],
+    ['Down', 'Meteor Heel', 'Diving kick. The first frames spike foes downward.'],
+  ],
   shape: 'circle', w: 44, h: 60,
   palettes: ['#33e1ff', '#ff5fa2', '#9cff57', '#f5f5f5'],
   weight: 78, run: 10.2, runAccel: 1.6, air: 4.6, airAccel: 0.55,
@@ -181,6 +187,12 @@ zip.moves = {
 const bastion = {
   id: 'bastion', name: 'Bastion', role: 'Heavyweight',
   blurb: 'A walking wall. Every hit hurts, but so does missing.',
+  specials: [
+    ['Neutral', 'Megaton', 'Hold to charge a huge armored punch.'],
+    ['Side', 'Bulldoze', 'Shoulder charge that shrugs off weak hits.'],
+    ['Up', 'Rocket Riser', 'Multi-hit rising uppercut. Short reach.'],
+    ['Down', 'Quake', 'Leap and slam. The shockwave hits both sides.'],
+  ],
   shape: 'square', w: 66, h: 84,
   palettes: ['#ff8a3d', '#5aa2ff', '#c7c7c7', '#e04848'],
   weight: 128, run: 6.4, runAccel: 0.9, air: 3.4, airAccel: 0.35,
@@ -244,6 +256,12 @@ bastion.moves = {
 const prism = {
   id: 'prism', name: 'Prism', role: 'Zoner',
   blurb: 'Keeps you out with bolts and boomerangs. Hates being cornered.',
+  specials: [
+    ['Neutral', 'Shard Bolt', 'Hold to charge, release to fire.'],
+    ['Side', 'Boomerang', 'Flies out and comes back, hitting both ways.'],
+    ['Up', 'Warp', 'Teleport in any direction. Untouchable while gone.'],
+    ['Down', 'Mirror', 'Reflects projectiles back with 1.5× damage.'],
+  ],
   shape: 'triangle', w: 50, h: 72,
   palettes: ['#b46bff', '#3ddc97', '#ffb547', '#ff6b6b'],
   weight: 90, run: 7.2, runAccel: 1.0, air: 3.8, airAccel: 0.45,
@@ -301,6 +319,12 @@ prism.moves = {
 const nova = {
   id: 'nova', name: 'Nova', role: 'All-rounder',
   blurb: 'A solid kit for every situation, plus a counter for the reckless.',
+  specials: [
+    ['Neutral', 'Star Ball', 'Bouncing projectile. Two on screen at once.'],
+    ['Side', 'Comet Roll', 'Rolling multi-hit dash that ends in a launcher.'],
+    ['Up', 'Supernova', 'Rising multi-hit spin.'],
+    ['Down', 'Counter', 'Get hit during the stance to strike back harder.'],
+  ],
   shape: 'hexagon', w: 52, h: 70,
   palettes: ['#ffd23d', '#ff7b54', '#6be0ff', '#8f7bff'],
   weight: 100, run: 8.2, runAccel: 1.2, air: 3.9, airAccel: 0.48,

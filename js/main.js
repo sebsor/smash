@@ -90,6 +90,31 @@ const syncMute = () => { muteBtn.textContent = 'Sound: ' + (audio.isMuted() ? 'o
 syncMute();
 muteBtn.addEventListener('click', () => { audio.unlock(); audio.toggleMute(); syncMute(); });
 
+// In-match controls panel (top left). Compact version of CONTROLS_HELP.
+const HUD_KEYS = [
+  ['Move', 'W A S D', '← ↑ → ↓'],
+  ['Jump', 'Space / W', 'Space'],
+  ['Attack', 'J', 'Z'],
+  ['Special', 'K', 'X'],
+  ['Smash', 'I', 'C'],
+  ['Shield', 'L / Shift', 'V / Shift'],
+  ['Grab', ';', 'B'],
+  ['Menu', 'Esc', 'Esc'],
+];
+$('#hud-keys').innerHTML = HUD_KEYS.map(([a, k1, k2]) => `<tr><th>${a}</th><td><kbd>${k1}</kbd></td><td><kbd>${k2}</kbd></td></tr>`).join('');
+function setHudCollapsed(collapsed) {
+  $('#hud-controls').classList.toggle('collapsed', collapsed);
+  const btn = $('#btn-hud-toggle');
+  btn.textContent = collapsed ? 'Show' : 'Hide';
+  btn.setAttribute('aria-expanded', String(!collapsed));
+  store.set('ss-hud-collapsed', collapsed ? '1' : '0');
+}
+setHudCollapsed(store.get('ss-hud-collapsed', '0') === '1');
+$('#btn-hud-toggle').addEventListener('click', e => {
+  setHudCollapsed(!$('#hud-controls').classList.contains('collapsed'));
+  e.currentTarget.blur();   // so Space doesn't "click" it again mid-match
+});
+
 // controls overlay
 const keysTable = $('#keys');
 keysTable.innerHTML = '<tr><th>Action</th><th>Left-hand layout</th><th>Arrow layout</th></tr>' +
@@ -310,7 +335,10 @@ for (const id of CHARACTER_ORDER) {
   card.className = 'fighter-card';
   card.dataset.char = id;
   card.setAttribute('role', 'radio');
-  card.innerHTML = `<canvas width="440" height="300"></canvas><span class="nm">${c.name}</span><span class="rl">${c.role}</span><span class="bl">${c.blurb}</span><span class="pickers"></span>`;
+  const specials = c.specials.map(([dir, name, desc]) =>
+    `<span class="sp"><span class="sp-dir">${dir}</span><span class="sp-txt"><b>${name}</b> ${desc}</span></span>`).join('');
+  card.innerHTML = `<canvas width="440" height="300"></canvas><span class="nm">${c.name}</span><span class="rl">${c.role}</span><span class="bl">${c.blurb}</span>` +
+    `<span class="specials"><span class="sp-head">Specials</span>${specials}</span><span class="pickers"></span>`;
   card.addEventListener('click', () => pickChar(id));
   $('#roster').append(card);
   rosterCards.push({ id, cv: card.querySelector('canvas'), card });

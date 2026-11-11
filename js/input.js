@@ -13,8 +13,9 @@
 import { BTN, BTN_NAMES } from './config.js';
 
 // Two layouts work at the same time — use whichever feels better.
+// A key can press several buttons: W is "up" AND a jump (Smash calls this tap jump).
 export const KEYMAP = {
-  KeyA: 'LEFT', KeyD: 'RIGHT', KeyW: 'UP', KeyS: 'DOWN',
+  KeyA: 'LEFT', KeyD: 'RIGHT', KeyW: ['UP', 'TAPJUMP'], KeyS: 'DOWN',
   ArrowLeft: 'LEFT', ArrowRight: 'RIGHT', ArrowUp: 'UP', ArrowDown: 'DOWN',
   Space: 'JUMP',
   KeyJ: 'ATTACK', KeyZ: 'ATTACK',
@@ -26,7 +27,7 @@ export const KEYMAP = {
 
 export const CONTROLS_HELP = [
   ['Move', 'W A S D', 'Arrow keys'],
-  ['Jump', 'Space', 'Space'],
+  ['Jump', 'Space or W', 'Space'],
   ['Attack', 'J', 'Z'],
   ['Special', 'K', 'X'],
   ['Smash attack (hold to charge)', 'I', 'C'],
@@ -49,10 +50,12 @@ export class KeyboardInput {
       e.preventDefault();               // stop Space/arrows from scrolling the page
       if (e.repeat || this.keysDown.has(e.code)) return;
       this.keysDown.add(e.code);
-      const bit = BTN[b];
-      if (!(this.held & bit)) {
-        const i = Math.log2(bit);
-        this.counters[i] = (this.counters[i] + 1) & 255;
+      for (const name of [].concat(b)) {
+        const bit = BTN[name];
+        if (!(this.held & bit)) {
+          const i = Math.log2(bit);
+          this.counters[i] = (this.counters[i] + 1) & 255;
+        }
       }
       this.recompute();
     });
@@ -67,7 +70,7 @@ export class KeyboardInput {
 
   recompute() {
     let h = 0;
-    for (const code of this.keysDown) h |= BTN[KEYMAP[code]];
+    for (const code of this.keysDown) for (const name of [].concat(KEYMAP[code])) h |= BTN[name];
     this.held = h;
   }
 
